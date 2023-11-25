@@ -6,10 +6,10 @@ Shutdown your computer from any device on your local network.
 
 Execute the program and go to
     
-    http://[YOUR IP]:3004/?t=[MINUTS TO SLEEP]
+    http://[YOUR IP]:3004/dormite/[MINUTS TO SLEEP]
 
 if you want to cancel the shutdown schedule just go to
-    http://[YOUR IP]:3004/?t=c
+    http://[YOUR IP]:3004/dormite/c
 
 # Configuration
 

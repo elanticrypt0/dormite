@@ -2,36 +2,43 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	"log"
 	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/gofiber/fiber/v2"
 )
 
-var rCounter = 0
-
 func main() {
-	app_port := "3004"
-	sleepHandler := http.HandlerFunc(wait4Sleep)
-	http.Handle("/", sleepHandler)
+	app_port := "3005"
 
-	fmt.Println("Escuchando puerto ", app_port)
-	http.ListenAndServe(":"+app_port, nil)
+	app := fiber.New(fiber.Config{
+		Prefork:       true,
+		CaseSensitive: true,
+		StrictRouting: true,
+		ServerHeader:  "Fiber",
+		AppName:       "Dormite",
+	})
+
+	app.Static("/", "./public")
+
+	app.Get("dormite/:t", func(c *fiber.Ctx) error {
+		return wait4Sleep(c)
+	})
+
+	log.Fatal(app.Listen(":" + app_port))
 
 }
 
-func wait4Sleep(w http.ResponseWriter, r *http.Request) {
-	if strings.Contains(r.RemoteAddr, "192.168") {
-		fmt.Println("Request accepted")
-		fmt.Printf("\nRequests Number: %d \n", rCounter)
-		rCounter++
-		time_query := r.URL.Query().Get("t")
+func wait4Sleep(c *fiber.Ctx) error {
+	if strings.Contains(c.IP(), "127.0.0.1") || strings.Contains(c.IP(), "192.168") {
+		time_query := c.Params("t")
 		msg := ""
 		if time_query != "c" {
 			fmt.Println("###########")
-			fmt.Println("New Request")
-			if time_query != "-1" && time_query != "0" {
+			if time_query != "0" {
 				t, _ := strconv.Atoi(time_query)
 				msg = fmt.Sprintf("\nMe voy a dormir en : %d minutos", t)
 				dormite(t)
@@ -41,10 +48,9 @@ func wait4Sleep(w http.ResponseWriter, r *http.Request) {
 			noteduemas()
 		}
 		fmt.Println(msg)
-		w.WriteHeader(200)
-		w.Write([]byte(msg))
+		return c.SendString(msg)
 	} else {
-		w.WriteHeader(500)
+		return c.SendString("No encontrado")
 	}
 }
 
